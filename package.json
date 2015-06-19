@@ -1,4 +1,11 @@
-"scripts": {
-  "start": "node server.js"
-},
-"main": "server.js"
+{
+  "name": "Singles Galicia Chat",
+  "version": "0.0.1",
+  "dependencies": {
+    "ws": "*"
+  }
+  "scripts": {
+    "start": "node server.js"
+  }
+  "main": "server.js"
+}
