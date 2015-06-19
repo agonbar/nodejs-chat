@@ -1,11 +1,18 @@
 {
-  "name": "Singles Galicia Chat",
+  "name": "singlesGaliciaChat",
   "version": "0.0.1",
   "dependencies": {
     "ws": "*"
-  }
+  },
+
+  "repository" : { 
+    "type" : "git",
+    "url" : "https://github.com/npm/npm.git"
+  },
+
   "scripts": {
     "start": "node server.js"
-  }
+  },
+
   "main": "server.js"
 }
