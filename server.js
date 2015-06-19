@@ -52,7 +52,7 @@ var chat = {
       userList.push(chat.clients[i].name);
     }
     console.log(userList.concat());
-    chat.broadcastCommand(userList.concat() + 'se ha unido a la sala');
+    chat.broadcastCommand(userList.concat() + ' se ha unido a la sala');
   },
 
   broadcastCommand: function(cmd) {
