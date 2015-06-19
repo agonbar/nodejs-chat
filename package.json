@@ -1,0 +1,4 @@
+"scripts": {
+  "start": "node Server.js"
+},
+"main": "Server.js"
