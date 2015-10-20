@@ -2,11 +2,12 @@
   "name": "singlesGaliciaChat",
   "version": "0.0.1",
   "dependencies": {
+    "mongoose": "^4.1.12",
     "ws": "latest"
   },
-  "repository" : {
-    "type" : "git",
-    "url" : "https://github.com/agonbar/nodejs-chat.git"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/agonbar/nodejs-chat.git"
   },
   "scripts": {
     "start": "node server.js"
