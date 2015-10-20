@@ -1,0 +1,10 @@
+{
+    "port": 8082,
+    "web": {
+        "host": "testing.singlesgalicia.es",
+        "port": 80,
+        "api": {
+            "validate_auth": "/api/singles/validate_auth_cookie/?cookie={{cookie}}"
+        }
+    }
+}
