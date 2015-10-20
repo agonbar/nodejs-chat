@@ -10,7 +10,7 @@
     "url": "https://github.com/agonbar/nodejs-chat.git"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node app.js"
   },
-  "main": "server.js"
+  "main": "app.js"
 }

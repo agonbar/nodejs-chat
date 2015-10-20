@@ -11,7 +11,30 @@ mongouri += config.db.host + ":" config.db.port + "/" + config.db.dbname;
 
 var db = false;
 
-module.exports.db = function() {
+module.exports.connection = function() {
     if (!db) db = mongoose.connect(mongouri);
     return db;
 }
+
+var UserSchema = new Schema({
+    nick: String,
+    lastLogin: Date,
+    flirts: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
+    lastGPS: {
+        n: Number,
+        w: Number
+    }
+});
+
+var MessageSchema = new Schema({
+    nick: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    content: String,
+    date: Date
+});
+
+var ChatSchema = new Schema({
+    name: String,
+    users: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
+    messages: [{type: mongoose.Schema.Types.ObjectId, ref: 'Message'}],
+    createdDate: Date
+});
