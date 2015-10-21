@@ -1,4 +1,4 @@
-var WebSocketServer = require('ws').Server,
+var WebSocketServer = require('ws').Server;
 var ApiClient = require('./apiclient.js');
 
 function ChatServer(port) {
@@ -67,21 +67,21 @@ function ChatServer(port) {
             client.on('message', function incoming(message) {
                 var cmd = message.split(' ')[0];
 
-                switch (expression) {
+                switch (cmd) {
                     case "/login":
                         loginCommand(client, message, function(granted) {
                             loggedin = granted;
                         });
                         break;
-                    case "/msg"
+                    case "/msg":
                         if (loggedin) msgCommand(client, message);
                         else client.socket.send("/err denied");
                         break;
-                    case "/join"
+                    case "/join":
                         if (loggedin) joinCommand(client, message);
                         else client.socket.send("/err denied");
                         break;
-                    case "/flirt"
+                    case "/flirt":
                         if (loggedin) flirtCommand(client, message);
                         else client.socket.send("/err denied");
                         break;
@@ -96,7 +96,7 @@ function ChatServer(port) {
         }
     }
 
-    var dispatchEvent = funcion(action, param) {
+    var dispatchEvent = function(action, param) {
         if (oncallbacks[action] != 'undefined') {
             oncallbacks[action].forEach(function(cb) {
                 cb(param);
