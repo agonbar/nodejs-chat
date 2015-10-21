@@ -1,0 +1,23 @@
+<html>
+<head>
+    <script src="client.js"></script>
+</head>
+<body>
+    <script>
+        var chat = new ChatClient("localhost:8082");
+
+        chat.on("error", function(err) {
+            console.log("Ha habido un error: " + err);
+        });
+
+        chat.on("connection", function() {
+            chat.login("manolo", "cookiedemanolo");
+
+            chat.on("login", function(logedin) {
+                if (logedin) console.log("Logueado con exito");
+                else console.log("Usuario no logeado");
+            });
+        });
+    </script>
+</body>
+</html>
