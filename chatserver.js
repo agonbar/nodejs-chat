@@ -1,10 +1,11 @@
 var WebSocketServer = require('ws').Server;
 var ApiClient = require('./apiclient.js');
+var Db = require('./database.js');
 
 function ChatServer(port) {
     this.port = port;
 
-    var wss = new WebSocketServer({
+    var wsserver = new WebSocketServer({
         host: '0.0.0.0',
         port: this.port
     });
@@ -16,12 +17,25 @@ function ChatServer(port) {
     // Logged in an user
     var loginCommand = function(client, command, cb) {
         var cmdstr = command.split(" ");
-        var user = cmdstr[1];
+        var username = cmdstr[1];
         var cookie = cmdstr[2];
 
-        ApiClient.isAuth(user, cookie, function(granted) {
-            if (!granted) client.socket.send("/err denied");
-            cb(user);
+        ApiClient.isAuth(username, cookie, function(err, granted) {
+            if (err) client.send("/err Internal server error.");
+            else {
+                Db.getUser(username, function(err, user) {
+                    if (err) client.send("/err Internal server error.");
+                    else if(user) {
+                        cb(user);
+                    }
+                    else {
+                        Db.createUser(username, function(err, user) {
+                            if (err) client.send("/err Internal server error.");
+                            else cb(user);
+                        })
+                    }
+                });
+            }
         });
     }
 
@@ -54,7 +68,7 @@ function ChatServer(port) {
     this.listen = function(cb) {
         dispatchEvent("listen", null);
 
-        wss.on('connection', function connection(client) {
+        wsserver.on('connection', function connection(client) {
             // False si no login, string con el nick si logeado
             var loggedin = false;
 
@@ -62,6 +76,7 @@ function ChatServer(port) {
             });
 
             client.on('close', function close() {
+                loggedin = false;
             });
 
             client.on('message', function incoming(message) {
@@ -70,20 +85,26 @@ function ChatServer(port) {
                 switch (cmd) {
                     case "/login":
                         loginCommand(client, message, function(granted) {
-                            loggedin = granted;
+                            if (granted) {
+                                loggedin = true;
+                                client.send("/login ok");
+                            }
+                            else {
+                                client.send("/login err")
+                            }
                         });
                         break;
                     case "/msg":
                         if (loggedin) msgCommand(client, message);
-                        else client.socket.send("/err denied");
+                        else client.send("/err denied msg");
                         break;
                     case "/join":
                         if (loggedin) joinCommand(client, message);
-                        else client.socket.send("/err denied");
+                        else client.send("/err denied join");
                         break;
                     case "/flirt":
                         if (loggedin) flirtCommand(client, message);
-                        else client.socket.send("/err denied");
+                        else client.send("/err denied flirt");
                         break;
                 }
             });

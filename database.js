@@ -1,4 +1,5 @@
 var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
 var config = require('./config.json');
 
 var mongouri = "mongodb://";
@@ -7,12 +8,12 @@ if (config.db.auth.user) {
     mongouri += config.db.auth.user + ":" + config.db.auth.pass + "@";
 }
 
-mongouri += config.db.host + ":" config.db.port + "/" + config.db.dbname;
+mongouri += config.db.host + ":" + config.db.port + "/" + config.db.dbname;
 
 var db = mongoose.connect(mongouri);
 
 var UserSchema = new Schema({
-    nick: String,
+    nick: { type: String, required: true, unique: true },
     lastLogin: Date,
     flirts: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
     lastGPS: {
@@ -21,36 +22,62 @@ var UserSchema = new Schema({
     }
 });
 
-var User = mongoose.model('User', UserSchema);
+mongoose.model('User', UserSchema);
 
 var MessageSchema = new Schema({
     nick: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-    content: String,
+    content: { type: String, required: true },
     date: Date
 });
 
-var Message = mongoose.model('Message', MessageSchema);
+mongoose.model('Message', MessageSchema);
+var Message = mongoose.model('Message');
 
 var ChatSchema = new Schema({
-    name: String,
+    name: { type: String, required: true, unique: true },
     users: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
     messages: [{type: mongoose.Schema.Types.ObjectId, ref: 'Message'}],
     createdDate: Date
 });
 
-var Chat = mongoose.model('Chat', ChatSchema);
+mongoose.model('Chat', ChatSchema);
 
 /* Callback an user object if exist or false if not */
 module.exports.getUser = function(user, cb) {
-    User.findone({ "nick": user }, function(err, user) {
+    var User = mongoose.model('User');
+
+    User.findOne({ "nick": user }, function(err, user) {
         if (err) cb(err, false);
-        else cb(null, user);
+        else {
+            if (user) {
+                user.lastLogin = Date.now();
+                user.save();
+                cb(null, user);
+            }
+            else {
+                cb(null, null)
+            }
+        }
+    });
+}
+
+module.exports.createUser = function(user, cb) {
+    var User = mongoose.model('User');
+
+    User.create({
+        nick: user,
+        lastLogin: Date.now()
+    },
+    function(err, user) {
+        cb(err, user);
     });
 }
 
 /* Callback an chatroom object if exist or false if not */
 module.exports.getChat = function(name, cb) {
-    User.findone({ "name": name }, function(err, chat) {
+    var User = mongoose.model('User');
+
+    User.findOne({ "name": name }, function(err, chat) {
         if (err) cb(err, false);
         else cb(null, chat);
     });
@@ -73,14 +100,17 @@ module.exports.getPrivateChat = function(userone, usertwo, cb) {
 /* Create a private chat if the two users flirt between him. The name of the chatroom is user_one#user_two.
    The callback return the room object or false */
 var createPrivateChat = function(userone, usertwo, cb) {
-    useroneobj = module.exports.getUser(userone);
-    usertwoobj = module.exports.getUser(usertwo);
+    var User = mongoose.model('User');
+    var Chat = mongoose.model('Chat');
 
-    User.findone({ "nick": userone, "flirts": usertwoobj }, function(err, user) {
+    var useroneobj = module.exports.getUser(userone);
+    var usertwoobj = module.exports.getUser(usertwo);
+
+    User.findOne({ "nick": userone, "flirts": usertwoobj }, function(err, user) {
         if (err) cb(err);
         else
         {
-            User.findone({ "nick": usertwo, "flirts": useroneobj }, function(err, user) {
+            User.findOne({ "nick": usertwo, "flirts": useroneobj }, function(err, user) {
                 if (err) cb(err);
                 else
                 {
@@ -88,7 +118,7 @@ var createPrivateChat = function(userone, usertwo, cb) {
                         name: userone + "#" + usertwo,
                         users: [useroneobj, usertwoobj],
                         messages: [],
-                        createdDate: new Date()
+                        createdDate: Date.now()
                     });
 
                     chat.save(function(err, chat) {

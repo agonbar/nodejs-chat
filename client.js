@@ -20,12 +20,27 @@ var ChatClient = function(hostaddr) {
         socket.onclose = function (evt) {
             if (evt.code > 1000) {
                 devent("error", "Socket close. " + JSON.stringify(evt));
+                logedin = false;
                 if (reconnect) setTimeout(connect, this.reconnectinterval);
             }
         }
 
         socket.onmessage = function (event) {
-            console.log("[ChatClient] Mensaje del servidor no capturado: " + event.data);
+            var cmdstr = event.data.split(' ');
+            var cmd = cmdstr[0];
+
+            switch (cmd) {
+                case "/login":
+                    if (cmdstr[1] == "ok") {
+                        logedin = true;
+                        devent("login", true);
+                    }
+                    else devent("login", false);
+                    break;
+                default:
+                    console.log("[ChatClient] Mensaje del servidor no capturado: " + event.data);
+                    break;
+            }
         }
     }
 
