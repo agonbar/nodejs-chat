@@ -198,25 +198,6 @@ module.exports.setFlirt = function(flirter, toflirt, cb) {
   }
 };
 
-module.exports.getRooms = function(user, cb) {
-  var Chat = mongoose.model('Chat');
-
-  Chat.findOne({
-    'users': user
-  }, function(err, chats) {
-    var chatMap = {};
-
-    if (chats === undefined) {
-      cb(false, false);
-    } else {
-      chats.forEach(function(room) {
-        chatMap[room._id] = room;
-      });
-      cb(false, chatMap);
-    }
-  });
-};
-
 module.exports.getRoomUsers = function(room, cb) {
   var Chat = mongoose.model('Chat');
 
@@ -271,5 +252,25 @@ module.exports.addMsgRoom = function(user, room, msg, cb) {
           });
       });
     }
+  });
+};
+
+module.exports.getUserRooms = function(user, cb) {
+  var Chat = mongoose.model('Chat');
+  var User = mongoose.model('User');
+  User.findOne({
+    'nick': user
+  }, function(err, user) {
+    Chat.find({
+      'users': {
+        "$in": [user.id]
+      }
+    }, function(err, chats) {
+      if (chats === null || chats === undefined) {
+        cb(false, false);
+      } else {
+        cb(false, chats);
+      }
+    });
   });
 };
