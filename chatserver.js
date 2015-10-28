@@ -60,6 +60,18 @@ function ChatServer(port) {
         }
     }
 
+    var logoutUser = function(username) {
+        if (users_login[username]) {
+            delete users_login[username];
+        }
+
+        for (var i in room_sockets) {
+            if (room_sockets[i][username]) {
+                delete room_sockets[i][username];
+            }
+        }
+    }
+
     // Loguea un usuario
     var loginCommand = function(client, command, cb) {
         var cmdstr = command.split(" ");
@@ -137,7 +149,10 @@ function ChatServer(port) {
             });
 
             client.on('close', function close() {
-                loggedin = false;
+                if (user) {
+                    logoutUser(user.nick);
+                    user = false;
+                }
             });
 
             client.on('message', function incoming(message) {
