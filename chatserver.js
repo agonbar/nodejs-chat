@@ -14,7 +14,53 @@ function ChatServer(port) {
         "listen": []
     };
 
-    // Logged in an user
+    var users_login = {};
+    var room_sockets = {};
+
+    // Loguea un usuario en el chat
+    var loginUser = function(user, client, cb) {
+        if (user && user.nick)
+        {
+            // Registramos el usuario
+            users_login[user.nick] = user;
+            users_login[user.nick].socket = client;
+
+            // Enviamos aviso de login correcto
+            client.send("/login ok");
+
+            // Obtenemos la lista de salas
+            var userrooms = Db.getUserRooms(user.nick);
+
+            // Registramos los sockets en las salas
+            for (var i in userrooms) {
+                var roomname = userrooms[i];
+                if (!room_sockets[roomname]) room_sockets[roomname] = [];
+                room_sockets[roomname][user.nick] = client;
+            }
+
+            // Mandamos al cliente la lista de salas
+            client.send("/rooms main " + .join(" "));
+
+            // Mandamos los ultimos 10 mensajes al usuario
+            for (var i in userrooms) {
+                var roomname = userrooms[i];
+                var msgs = Db.getRoomMessages(roomname, 10);
+
+                for (var j in msgs) {
+                    client.send("/msg " + roomname + " " + msgs[j]);
+                }
+            }
+
+            cb(null, user);
+        }
+        else {
+            client.send("/login err");
+
+            cb("User not found.", false);
+        }
+    }
+
+    // Loguea un usuario
     var loginCommand = function(client, command, cb) {
         var cmdstr = command.split(" ");
         var username = cmdstr[1];
@@ -26,12 +72,14 @@ function ChatServer(port) {
                 Db.getUser(username, function(err, user) {
                     if (err) client.send("/err Internal server error.");
                     else if(user) {
-                        cb(user);
+                        loginUser(user, client, cb);
                     }
                     else {
                         Db.createUser(username, function(err, user) {
                             if (err) client.send("/err Internal server error.");
-                            else cb(user);
+                            else {
+                                loginUser(user, client, cb);
+                            }
                         })
                     }
                 });
@@ -39,30 +87,43 @@ function ChatServer(port) {
         });
     }
 
-    //
-    var msgCommand = function(client, command) {
+    // Manda un msg a una sala
+    var msgCommand = function(client, command, username) {
         var cmdstr = command.split(" ");
         var room = cmdstr[1];
         var msg = cmdstr[2];
 
-        // Si usuario tiene sala, se registra en bd y se manda broadcast a los demas
-        // Si no tiene sala, devuelve error
+        var dbrooms = Db.getUserRooms(username);
+
+        if (dbrooms.indexOf(room) == -1) {
+            client.send("/err User try to send a message to an unauthorized room.");
+        }
+        else {
+            var msgobj = Db.addMsgRoom(username, room, msg);
+
+            if (room_sockets[room])
+            {
+                for (var i in room_sockets[room])
+                {
+                    room_sockets[room][i].send("/msg " + room + " " + msgobj);
+                }
+            }
+        }
     }
 
-    var joinCommand = function(client, command) {
-        var cmdstr = command.split(" ");
-        var room = cmdstr[1];
-
-        // Si usuario ya registrado en sala, se manda broadcast a los demas
-        // de que se conecto, y se le mandan los ultimos 10 msg
-    }
-
-    var flirtCommand = function(client, command) {
+    var flirtCommand = function(client, command, username) {
         var cmdstr = command.split(" ");
         var user = cmdstr[1];
 
-        // Si el usuario destino tiene al usuario en el campo flirts, se abre sala.
-        // Sino, se guarda en BD y se avisa al destinatario.
+        // Registramos el flirt
+        Db.setFlirt(username, user, function(err, chat) {
+            if (err) client.send("/err Internal server error.");
+            else if (chat) {
+                // Si se crea un chat, notificarselo a los usuarios.
+                if (users_login[user]) users_login[user].socket.send("/rooms " + chat.name);
+                if (users_login[username]) users_login[username].socket.send("/rooms " + chat.name);
+            }
+        });
     }
 
     this.listen = function(cb) {
@@ -70,7 +131,7 @@ function ChatServer(port) {
 
         wsserver.on('connection', function connection(client) {
             // False si no login, string con el nick si logeado
-            var loggedin = false;
+            var user = false;
 
             client.on('open', function open() {
             });
@@ -84,27 +145,17 @@ function ChatServer(port) {
 
                 switch (cmd) {
                     case "/login":
-                        loginCommand(client, message, function(granted) {
-                            if (granted) {
-                                loggedin = true;
-                                client.send("/login ok");
-                            }
-                            else {
-                                client.send("/login err")
-                            }
+                        loginCommand(client, message, function(err, userobj) {
+                            if (!err) user = userobj;
                         });
                         break;
                     case "/msg":
-                        if (loggedin) msgCommand(client, message);
-                        else client.send("/err denied msg");
-                        break;
-                    case "/join":
-                        if (loggedin) joinCommand(client, message);
-                        else client.send("/err denied join");
+                        if (user) msgCommand(client, message, user.nick);
+                        else client.send("/err Unauthorized user");
                         break;
                     case "/flirt":
-                        if (loggedin) flirtCommand(client, message);
-                        else client.send("/err denied flirt");
+                        if (user) flirtCommand(client, message, user.nick);
+                        else client.send("/err Unauthorized user");
                         break;
                 }
             });
