@@ -203,26 +203,20 @@ module.exports.getRoomUsers = function(room, cb) {
 
   Chat.findOne({
     'name': room
-  }, function(err, chat) {
-    if (chat === null) {
-      cb(false, false);
-    } else {
-      cb(false, chat.users);
-    }
+  }).populate('users').exec(function(err, items) {
+    cb(false, items.users);
   });
 };
 
+//TODO: use the limit
+//TODO: Probably, return the string not the id?
 module.exports.getRoomMessages = function(room, limit, cb) {
   var Chat = mongoose.model('Chat');
 
   Chat.findOne({
     'name': room
-  }, function(err, chat) {
-    if (chat === null) {
-      cb(false, false);
-    } else {
-      cb(false, chat.messages);
-    }
+  }).populate('messages').exec(function(err, items) {
+    cb(false, items.messages);
   });
 };
 
