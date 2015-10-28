@@ -23,7 +23,7 @@ var ChatClient = function(hostaddr) {
 
                 logedin = false;
                 rooms = [];
-                
+
                 if (reconnect) setTimeout(connect, this.reconnectinterval);
             }
         }
@@ -44,6 +44,10 @@ var ChatClient = function(hostaddr) {
                     cmdstr.shift();
                     addRooms(cmdstr);
                     break;
+                case "/msg":
+                    cmdstr.shift();
+                    addRooms(cmdstr);
+                    break;
                 default:
                     console.log("[ChatClient] Mensaje del servidor no capturado: " + event.data);
                     break;
@@ -54,7 +58,7 @@ var ChatClient = function(hostaddr) {
     var connected = false;
 
     var logedin = false;
-    var rooms = [];
+    var rooms = {};
 
     var onhandlers = {
         "connection": false,
@@ -75,9 +79,22 @@ var ChatClient = function(hostaddr) {
         for (var roomi in roomsa) {
             if (rooms.indexOf(roomsa[roomi]) == -1)
             {
-                rooms.push(roomsa[roomi]);
+                rooms[roomsa[roomi]] = [];
+                devent("room", roomsa[roomi]);
                 console.log("[ChatClient] El usuario ha entrado en la sala: " + roomsa[roomi]);
             }
+        }
+    }
+
+    var addMsg = function(msgcmd) {
+        var room = msgcmd.shift();
+        var msg = new JSONObject(msgcmd.join(" "));
+
+        if (rooms.indexOf(room) == -1)
+        {
+            rooms[room].push(msg);
+            devent("message", { "room": room, "message": msg });
+            console.log("[ChatClient] Mensaje recibido [" + room + "]: " + JSON.stringify(msg));
         }
     }
 
