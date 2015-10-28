@@ -208,14 +208,17 @@ module.exports.getRoomUsers = function(room, cb) {
   });
 };
 
-//TODO: use the limit
-//TODO: Probably, return the string not the id?
 module.exports.getRoomMessages = function(room, limit, cb) {
   var Chat = mongoose.model('Chat');
 
   Chat.findOne({
     'name': room
-  }).populate('messages').exec(function(err, items) {
+  }).populate({
+    path: 'messages',
+    options: {
+      'limit': limit
+    }
+  }).exec(function(err, items) {
     cb(false, items.messages);
   });
 };
@@ -259,12 +262,8 @@ module.exports.getUserRooms = function(user, cb) {
       'users': {
         "$in": [user.id]
       }
-    }, function(err, chats) {
-      if (chats === null || chats === undefined) {
-        cb(false, false);
-      } else {
-        cb(false, chats);
-      }
+    }).populate('users').exec(function(err, items) {
+      cb(false, items);
     });
   });
 };

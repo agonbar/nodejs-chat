@@ -21,7 +21,7 @@ Db.getRoomUsers("main", function cb(res1, res2) {
   console.log("getRoomUsers: " + JSON.stringify(res2, undefined, 4));
 });
 
-Db.getRoomMessages("main", 10, function cb(res1, res2) {
+Db.getRoomMessages("main", 4, function cb(res1, res2) {
   console.log("getRoomMessages: " + JSON.stringify(res2, undefined, 4));
 });
 
