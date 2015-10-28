@@ -20,7 +20,10 @@ var ChatClient = function(hostaddr) {
         socket.onclose = function (evt) {
             if (evt.code > 1000) {
                 devent("error", "Socket close. " + JSON.stringify(evt));
+
                 logedin = false;
+                rooms = [];
+                
                 if (reconnect) setTimeout(connect, this.reconnectinterval);
             }
         }
@@ -36,6 +39,10 @@ var ChatClient = function(hostaddr) {
                         devent("login", true);
                     }
                     else devent("login", false);
+                    break;
+                case "/rooms":
+                    cmdstr.shift();
+                    addRooms(cmdstr);
                     break;
                 default:
                     console.log("[ChatClient] Mensaje del servidor no capturado: " + event.data);
@@ -62,6 +69,16 @@ var ChatClient = function(hostaddr) {
 
     this.getRooms = function() {
         return rooms;
+    }
+
+    var addRooms = function(roomsa) {
+        for (var roomi in roomsa) {
+            if (rooms.indexOf(roomsa[roomi]) == -1)
+            {
+                rooms.push(roomsa[roomi]);
+                console.log("[ChatClient] El usuario ha entrado en la sala: " + roomsa[roomi]);
+            }
+        }
     }
 
     var checks = function(con, lin) {
