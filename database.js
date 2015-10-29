@@ -187,20 +187,28 @@ var createPrivateChat = function(userone, usertwo, cb) {
 /* Flirt a user by the side of other user. If the two user flirt between him, a new chatroom is created.
   The callback return the chatroom or false */
 module.exports.setFlirt = function(flirter, toflirt, cb) {
-  flirterobj = module.exports.getUser(flirter);
-  toflirtobj = module.exports.getUser(toflirt);
+  module.exports.getUser(flirter, function(err, fobj) {
+      var flirterobj = fobj;
 
-  if (flirterobj) cb("Flirter not found", false);
-  else if (toflirtobj) cb("User to flirt not found", false);
-  else {
-    toflirtobj.flirts.push(flirterobj);
-    toflirtobj.save();
+      if (err) cb("Internal server error.", false);
+      else module.exports.getUser(toflirt, function(err, toflirtobj) {
+          if (err) cb("Internal server error.", false);
+          else {
+              if (flirterobj) cb("Flirter <" + flirter + "> not found.", false);
+              else if (toflirtobj) cb("User to flirt <" + toflirt + "> not found.", false);
+              else {
+                  console.log(toflirtobj);
+                  toflirtobj.flirts.push(flirterobj);
+                  toflirtobj.save();
 
-    createPrivateChat(flirter, toflirt, function(err, chat) {
-      if (err) cb(false, false);
-      else cb(false, chat);
-    });
-  }
+                  createPrivateChat(flirter, toflirt, function(err, chat) {
+                      if (err) cb(false, false);
+                      else cb(false, chat);
+                  });
+              }
+          }
+      });
+  });
 };
 
 module.exports.getRoomUsers = function(room, cb) {

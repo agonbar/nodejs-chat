@@ -137,7 +137,7 @@ function ChatServer(port) {
 
         // Registramos el flirt
         Db.setFlirt(username, user, function(err, chat) {
-            if (err) sendCommand(client, "/err Internal server error.", username);
+            if (err) sendCommand(client, "/err Internal server error. " + err, username);
             else if (chat) {
                 // Si se crea un chat, notificarselo a los usuarios.
                 if (users_login[user]) sendCommand(users_login[user].socket, "/rooms " + chat.name, username);
