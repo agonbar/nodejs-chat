@@ -8,6 +8,10 @@ Db.createUser('testUsuario1', function cb(res1, res2) {
   console.log("createUser: " + res2);
 });
 
+Db.createUser('testUsuario2', function cb(res1, res2) {
+  console.log("createUser: " + res2);
+});
+
 Db.getUserRooms('testUsuario2', function cb(res1, res2) {
   console.log("getUserRooms: " + JSON.stringify(res2, undefined, 4));
 });
