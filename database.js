@@ -209,7 +209,8 @@ module.exports.getRoomUsers = function(room, cb) {
   Chat.findOne({
     'name': room
   }).populate('users').exec(function(err, items) {
-    cb(false, items.users);
+      if (!err && items) cb(false, items.users);
+      else cb(err, []);
   });
 };
 
@@ -220,9 +221,13 @@ module.exports.getRoomMessages = function(room, limit, cb) {
       'name': room
     })
     .exec(function(err, room) {
-      room.deepPopulate(['messages.nick.nick'], function(err, rmsg) {
-        cb(false, rmsg.messages.slice(0, limit));
-      });
+        if (!err && room)
+        {
+            room.deepPopulate(['messages.nick.nick'], function(err, rmsg) {
+                cb(false, rmsg.messages.slice(0, limit));
+            });
+        }
+        else cb(err, []);
     });
 };
 
