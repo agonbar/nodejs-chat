@@ -152,52 +152,50 @@ var createPrivateChat = function(userone, usertwo, cb) {
   var User = mongoose.model('User');
   var Chat = mongoose.model('Chat');
 
-  var useroneobj = module.exports.getUser(userone);
-  var usertwoobj = module.exports.getUser(usertwo);
+    module.exports.getUser(userone, function(err, useroneobj) {
+        module.exports.getUser(usertwo, function(err, usertwoobj) {
+            User.findOne({
+              "nick": userone,
+              "flirts": usertwoobj
+            }, function(err, user) {
+              if (err) cb(err);
+              else {
+                User.findOne({
+                  "nick": usertwo,
+                  "flirts": useroneobj
+                }, function(err, user) {
+                  if (err) cb(err);
+                  else {
+                    var chat = new Chat({
+                      name: userone + "#" + usertwo,
+                      users: [useroneobj, usertwoobj],
+                      messages: [],
+                      createdDate: Date.now()
+                    });
 
-  User.findOne({
-    "nick": userone,
-    "flirts": usertwoobj
-  }, function(err, user) {
-    if (err) cb(err);
-    else {
-      User.findOne({
-        "nick": usertwo,
-        "flirts": useroneobj
-      }, function(err, user) {
-        if (err) cb(err);
-        else {
-          var chat = new Chat({
-            name: userone + "#" + usertwo,
-            users: [useroneobj, usertwoobj],
-            messages: [],
-            createdDate: Date.now()
-          });
-
-          chat.save(function(err, chat) {
-            if (err) cb(err);
-            else cb(false, chat);
-          });
-        }
-      });
-    }
-  });
+                    chat.save(function(err, chat) {
+                      if (err) cb(err);
+                      else cb(false, chat);
+                    });
+                  }
+                });
+              }
+            });
+        });
+    });
 };
 
 /* Flirt a user by the side of other user. If the two user flirt between him, a new chatroom is created.
   The callback return the chatroom or false */
 module.exports.setFlirt = function(flirter, toflirt, cb) {
-  module.exports.getUser(flirter, function(err, fobj) {
-      var flirterobj = fobj;
-
+  module.exports.getUser(flirter, function(err, flirterobj) {
       if (err) cb("Internal server error.", false);
       else module.exports.getUser(toflirt, function(err, toflirtobj) {
           if (err) cb("Internal server error.", false);
           else {
-              if (flirterobj) cb("Flirter <" + flirter + "> not found.", false);
-              else if (toflirtobj) cb("User to flirt <" + toflirt + "> not found.", false);
+              if (!flirterobj) cb("Flirter <" + flirter + "> not found.", false);
+              else if (!toflirtobj) cb("User to flirt <" + toflirt + "> not found.", false);
               else {
-                  console.log(toflirtobj);
                   toflirtobj.flirts.push(flirterobj);
                   toflirtobj.save();
 
