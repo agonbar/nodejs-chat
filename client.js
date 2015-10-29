@@ -46,7 +46,7 @@ var ChatClient = function(hostaddr) {
                     break;
                 case "/msg":
                     cmdstr.shift();
-                    addRooms(cmdstr);
+                    addMsg(cmdstr);
                     break;
                 default:
                     console.log("[ChatClient] Mensaje del servidor no capturado: " + event.data);
@@ -88,9 +88,9 @@ var ChatClient = function(hostaddr) {
 
     var addMsg = function(msgcmd) {
         var room = msgcmd.shift();
-        var msg = new JSONObject(msgcmd.join(" "));
+        var msg = JSON.parse(msgcmd.join(" "));
 
-        if (rooms.indexOf(room) == -1)
+        if (rooms[room])
         {
             rooms[room].push(msg);
             devent("message", { "room": room, "message": msg });

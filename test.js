@@ -4,7 +4,7 @@ var Db = require('./database.js');
 
 console.log("Begins:");
 
-Db.createUser('testUsuario2', function cb(res1, res2) {
+Db.createUser('testUsuario1', function cb(res1, res2) {
   console.log("createUser: " + res2);
 });
 

@@ -45,7 +45,12 @@ function ChatServer(port) {
                     var roomname = userrooms[i];
                     Db.getRoomMessages(roomname, 10, function(err, msgs) {
                         for (var j in msgs) {
-                            sendCommand(client, "/msg " + roomname + " " + msgs[j], user.nick);
+                            var formmsg = {
+                                user: msgs[j].nick.nick,
+                                content: msgs[j].content,
+                                date: new Date(msgs[j].date)
+                            }
+                            sendCommand(client, "/msg " + roomname + " " + JSON.stringify(formmsg), user.nick);
                         }
                     });
                 }
