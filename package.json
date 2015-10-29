@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "dependencies": {
     "mongoose": "^4.1.12",
+    "mongoose-deep-populate": "^2.0.2",
     "ws": "latest"
   },
   "repository": {
