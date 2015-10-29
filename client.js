@@ -45,7 +45,7 @@ var ChatClient = function(hostaddr) {
                     addRooms(cmdstr);
                     break;
                 case "/msg":
-                    cmdstr.shift();
+                    cmdstr = cmdstr.slice(1);
                     addMsg(cmdstr);
                     break;
                 default:
@@ -87,8 +87,10 @@ var ChatClient = function(hostaddr) {
     }
 
     var addMsg = function(msgcmd) {
-        var room = msgcmd.shift();
-        var msg = JSON.parse(msgcmd.join(" "));
+        var room = msgcmd[0];
+        msgcmd = msgcmd.slice(1);
+
+        var msg = (msgcmd.length > 1 ? JSON.parse(msgcmd.join(" ")) : JSON.parse(msgcmd));
 
         if (rooms[room])
         {
@@ -114,7 +116,6 @@ var ChatClient = function(hostaddr) {
 
     this.message = function(room, message) {
         if (checks(true, true)) return;
-        if (!connected) devent("error", "The chat client is not connected.");
         socket.send("/msg " + room + " " + message);
     }
 

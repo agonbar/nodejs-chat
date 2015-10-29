@@ -114,7 +114,6 @@ function ChatServer(port) {
         var msg = cmdstr[2];
 
         Db.getUserRooms(username, function(err, dbrooms) {
-    console.log(dbrooms);
             if (dbrooms.indexOf(room) == -1) {
                 sendCommand(client, "/err User try to send a message to an unauthorized room.", username);
             }
@@ -124,7 +123,9 @@ function ChatServer(port) {
                     {
                         for (var i in room_sockets[room])
                         {
-                            sendCommand(room_sockets[room][i], "/msg " + room + " " + formatMsgObj(msgobj), username);
+                            var msgformated = formatMsgObj(msgobj);
+                            msgformated.user = username;
+                            sendCommand(room_sockets[room][i], "/msg " + room + " " + JSON.stringify(msgformated), username);
                         }
                     }
                 });
