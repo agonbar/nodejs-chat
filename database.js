@@ -263,6 +263,7 @@ module.exports.addMsgRoom = function(user, room, msg, cb) {
 module.exports.getUserRooms = function(user, cb) {
   var Chat = mongoose.model('Chat');
   var User = mongoose.model('User');
+  var ret = [];
   User.findOne({
     'nick': user
   }, function(err, user) {
@@ -270,8 +271,11 @@ module.exports.getUserRooms = function(user, cb) {
       'users': {
         "$in": [user.id]
       }
-    }).populate('users').exec(function(err, items) {
-      cb(false, items);
+    }).exec(function(err, items) {
+      for (var i = 0; i < items.length; i++) {
+        ret.push(items[i].name);
+      }
+      cb(false, ret);
     });
   });
 };
