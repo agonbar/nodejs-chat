@@ -29,29 +29,29 @@ function ChatServer(port) {
             client.send("/login ok");
 
             // Obtenemos la lista de salas
-            var userrooms = Db.getUserRooms(user.nick);
-
-            // Registramos los sockets en las salas
-            for (var i in userrooms) {
-                var roomname = userrooms[i];
-                if (!room_sockets[roomname]) room_sockets[roomname] = [];
-                room_sockets[roomname][user.nick] = client;
-            }
-
-            // Mandamos al cliente la lista de salas
-            client.send("/rooms main " + .join(" "));
-
-            // Mandamos los ultimos 10 mensajes al usuario
-            for (var i in userrooms) {
-                var roomname = userrooms[i];
-                var msgs = Db.getRoomMessages(roomname, 10);
-
-                for (var j in msgs) {
-                    client.send("/msg " + roomname + " " + msgs[j]);
+            Db.getUserRooms(user.nick, function(err, userrooms) {
+                // Registramos los sockets en las salas
+                for (var i in userrooms) {
+                    var roomname = userrooms[i];
+                    if (!room_sockets[roomname]) room_sockets[roomname] = [];
+                    room_sockets[roomname][user.nick] = client;
                 }
-            }
 
-            cb(null, user);
+                // Mandamos al cliente la lista de salas
+                client.send("/rooms main " + userrooms.join(" "));
+
+                // Mandamos los ultimos 10 mensajes al usuario
+                for (var i in userrooms) {
+                    var roomname = userrooms[i];
+                    var msgs = Db.getRoomMessages(roomname, 10);
+
+                    for (var j in msgs) {
+                        client.send("/msg " + roomname + " " + msgs[j]);
+                    }
+                }
+
+                cb(null, user);
+            });
         }
         else {
             client.send("/login err");

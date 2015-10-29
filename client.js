@@ -77,7 +77,7 @@ var ChatClient = function(hostaddr) {
 
     var addRooms = function(roomsa) {
         for (var roomi in roomsa) {
-            if (rooms.indexOf(roomsa[roomi]) == -1)
+            if (roomsa[roomi].length > 0 && !rooms[roomsa[roomi]])
             {
                 rooms[roomsa[roomi]] = [];
                 devent("room", roomsa[roomi]);
@@ -130,7 +130,7 @@ var ChatClient = function(hostaddr) {
     }
 
     var devent = function(handler, param) {
-        if (onhandlers[handler] != "undefined") {
+        if (onhandlers[handler]) {
             onhandlers[handler](param);
         }
         else {
