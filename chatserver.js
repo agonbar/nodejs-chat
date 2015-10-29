@@ -26,14 +26,11 @@ function ChatServer(port) {
             users_login[user.nick].socket = client;
 
             // Enviamos aviso de login correcto
-            client.send("/login ok");
+            sendCommand(client, "/login ok", user.nick);
 
             // Obtenemos la lista de salas
             Db.getUserRooms(user.nick, function(err, userrooms) {
                 // Registramos los sockets en las salas
-                if (!room_sockets['main']) room_sockets['main'] = []
-                room_sockets['main'][user.nick] = client;
-
                 for (var i in userrooms) {
                     var roomname = userrooms[i];
                     if (!room_sockets[roomname]) room_sockets[roomname] = [];
@@ -41,23 +38,23 @@ function ChatServer(port) {
                 }
 
                 // Mandamos al cliente la lista de salas
-                client.send("/rooms main " + userrooms.join(" "));
+                sendCommand(client, "/rooms " + userrooms.join(" "), user.nick);
 
                 // Mandamos los ultimos 10 mensajes al usuario
                 for (var i in userrooms) {
                     var roomname = userrooms[i];
-                    var msgs = Db.getRoomMessages(roomname, 10);
-
-                    for (var j in msgs) {
-                        client.send("/msg " + roomname + " " + msgs[j]);
-                    }
+                    Db.getRoomMessages(roomname, 10, function(err, msgs) {
+                        for (var j in msgs) {
+                            sendCommand(client, "/msg " + roomname + " " + msgs[j], user.nick);
+                        }
+                    });
                 }
 
                 cb(null, user);
             });
         }
         else {
-            client.send("/login err");
+            sendCommand(client, "/login err");
 
             cb("User not found.", false);
         }
@@ -82,16 +79,16 @@ function ChatServer(port) {
         var cookie = cmdstr[2];
 
         ApiClient.isAuth(username, cookie, function(err, granted) {
-            if (err) client.send("/err Internal server error.");
+            if (err) sendCommand(client, "/err Internal server error.", username);
             else {
                 Db.getUser(username, function(err, user) {
-                    if (err) client.send("/err Internal server error.");
+                    if (err) sendCommand(client, "/err Internal server error.", username);
                     else if(user) {
                         loginUser(user, client, cb);
                     }
                     else {
                         Db.createUser(username, function(err, user) {
-                            if (err) client.send("/err Internal server error.");
+                            if (err) sendCommand(client, "/err Internal server error.", username);
                             else {
                                 loginUser(user, client, cb);
                             }
@@ -111,7 +108,7 @@ function ChatServer(port) {
         var dbrooms = Db.getUserRooms(username);
 
         if (dbrooms.indexOf(room) == -1) {
-            client.send("/err User try to send a message to an unauthorized room.");
+            sendCommand(client, "/err User try to send a message to an unauthorized room.", username);
         }
         else {
             var msgobj = Db.addMsgRoom(username, room, msg);
@@ -120,7 +117,7 @@ function ChatServer(port) {
             {
                 for (var i in room_sockets[room])
                 {
-                    room_sockets[room][i].send("/msg " + room + " " + msgobj);
+                    sendCommand(room_sockets[room][i], "/msg " + room + " " + msgobj, username);
                 }
             }
         }
@@ -132,13 +129,19 @@ function ChatServer(port) {
 
         // Registramos el flirt
         Db.setFlirt(username, user, function(err, chat) {
-            if (err) client.send("/err Internal server error.");
+            if (err) sendCommand(client, "/err Internal server error.", username);
             else if (chat) {
                 // Si se crea un chat, notificarselo a los usuarios.
-                if (users_login[user]) users_login[user].socket.send("/rooms " + chat.name);
-                if (users_login[username]) users_login[username].socket.send("/rooms " + chat.name);
+                if (users_login[user]) sendCommand(users_login[user].socket, "/rooms " + chat.name, username);
+                if (users_login[username]) sendCommand(users_login[username].socket, "/rooms " + chat.name, username);
             }
         });
+    }
+
+    var sendCommand = function(client, msg, username) {
+        var cmd = msg.split(" ")[0];
+        console.log("[Server => Client] Command <" + cmd + ">" + ((username) ? " User <" + username + ">" : "") + " Data <" + msg + ">");
+        client.send(msg);
     }
 
     this.listen = function(cb) {
@@ -160,6 +163,7 @@ function ChatServer(port) {
 
             client.on('message', function incoming(message) {
                 var cmd = message.split(' ')[0];
+                console.log("[Client => Server] Command <" + cmd + ">" + ((user) ? " User <" + user.nick + ">" : ""));
 
                 switch (cmd) {
                     case "/login":
@@ -169,15 +173,17 @@ function ChatServer(port) {
                         break;
                     case "/msg":
                         if (user) msgCommand(client, message, user.nick);
-                        else client.send("/err Unauthorized user");
+                        else sendCommand(client, "/err Unauthorized user");
                         break;
                     case "/flirt":
                         if (user) flirtCommand(client, message, user.nick);
-                        else client.send("/err Unauthorized user");
+                        else sendCommand(client, "/err Unauthorized user");
                         break;
                 }
             });
         });
+
+        cb();
     }
 
     this.on = function(action, callback) {

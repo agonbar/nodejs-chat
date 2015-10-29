@@ -11,10 +11,14 @@
         });
 
         chat.on("connection", function() {
-            chat.login("manolo", "cookiedemanolo");
+            chat.login("manuela", "cookiedemanolo");
 
             chat.on("login", function(logedin) {
-                if (logedin) console.log("Logueado con exito");
+                if (logedin) {
+                    console.log("Logueado con exito");
+
+                    chat.message("main", "Hola mundillo");
+                }
                 else console.log("Usuario no logeado");
             });
         });
