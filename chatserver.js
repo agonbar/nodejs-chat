@@ -31,6 +31,9 @@ function ChatServer(port) {
             // Obtenemos la lista de salas
             Db.getUserRooms(user.nick, function(err, userrooms) {
                 // Registramos los sockets en las salas
+                if (!room_sockets['main']) room_sockets['main'] = []
+                room_sockets['main'][user.nick] = client;
+
                 for (var i in userrooms) {
                     var roomname = userrooms[i];
                     if (!room_sockets[roomname]) room_sockets[roomname] = [];
