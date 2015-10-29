@@ -21,6 +21,10 @@
                 }
                 else console.log("Usuario no logeado");
             });
+
+            chat.on("message", function(data) {
+                console.log("LLego un msg a la sala " + data.room + ": " + data.message);
+            });
         });
     </script>
 </body>
