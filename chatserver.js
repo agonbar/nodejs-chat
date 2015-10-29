@@ -17,6 +17,14 @@ function ChatServer(port) {
     var users_login = {};
     var room_sockets = {};
 
+    var formatMsgObj = function(msgobj) {
+        return {
+            user: msgobj.nick.nick,
+            content: msgobj.content,
+            date: new Date(msgobj.date)
+        }
+    }
+
     // Loguea un usuario en el chat
     var loginUser = function(user, client, cb) {
         if (user && user.nick)
@@ -45,12 +53,7 @@ function ChatServer(port) {
                     var roomname = userrooms[i];
                     Db.getRoomMessages(roomname, 10, function(err, msgs) {
                         for (var j in msgs) {
-                            var formmsg = {
-                                user: msgs[j].nick.nick,
-                                content: msgs[j].content,
-                                date: new Date(msgs[j].date)
-                            }
-                            sendCommand(client, "/msg " + roomname + " " + JSON.stringify(formmsg), user.nick);
+                            sendCommand(client, "/msg " + roomname + " " + JSON.stringify(formatMsgObj(msgs[j])), user.nick);
                         }
                     });
                 }
@@ -122,7 +125,7 @@ function ChatServer(port) {
             {
                 for (var i in room_sockets[room])
                 {
-                    sendCommand(room_sockets[room][i], "/msg " + room + " " + msgobj, username);
+                    sendCommand(room_sockets[room][i], "/msg " + room + " " + formatMsgObj(msgobj), username);
                 }
             }
         }
