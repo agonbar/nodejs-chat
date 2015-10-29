@@ -1,6 +1,7 @@
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 var config = require('./config.json');
+var deepPopulate = require('mongoose-deep-populate')(mongoose);
 
 var mongouri = "mongodb://";
 
@@ -210,16 +211,23 @@ module.exports.getRoomUsers = function(room, cb) {
 
 module.exports.getRoomMessages = function(room, limit, cb) {
   var Chat = mongoose.model('Chat');
-
+  ChatSchema.plugin(deepPopulate, {
+    populate: {
+      'messages': {
+        select: 'nick'
+      }
+    }
+  });
   Chat.findOne({
     'name': room
-  }).populate({
+  }).deepPopulate({
     path: 'messages',
     options: {
       'limit': limit
     }
-  }).exec(function(err, items) {
-    cb(false, items.messages);
+  }).exec(function(err, res) {
+    var msgs = res.messages;
+    cb(false, msgs);
   });
 };
 
