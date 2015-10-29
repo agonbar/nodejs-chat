@@ -64,7 +64,9 @@ var ChatSchema = new Schema({
   createdDate: Date
 });
 
-ChatSchema.plugin(deepPopulate, { whitelist: ['messages.nick', 'messages.nick.nick'] });
+ChatSchema.plugin(deepPopulate, {
+  whitelist: ['messages.nick', 'messages.nick.nick']
+});
 
 mongoose.model('Chat', ChatSchema);
 
@@ -212,14 +214,16 @@ module.exports.getRoomUsers = function(room, cb) {
 };
 
 module.exports.getRoomMessages = function(room, limit, cb) {
-    var Chat = mongoose.model('Chat');
+  var Chat = mongoose.model('Chat');
 
-    Chat.findOne({ 'name': room })
-        .exec(function(err, room) {
-            room.deepPopulate(['messages.nick.nick'], function(err, rmsg) {
-                cb(false, rmsg.messages);
-            });
-        });
+  Chat.findOne({
+      'name': room
+    })
+    .exec(function(err, room) {
+      room.deepPopulate(['messages.nick.nick'], function(err, rmsg) {
+        cb(false, rmsg.messages.slice(0, limit));
+      });
+    });
 };
 
 module.exports.addMsgRoom = function(user, room, msg, cb) {
