@@ -114,7 +114,7 @@ var ChatClient = function(hostaddr) {
 
     this.message = function(room, message) {
         if (checks(true, true)) return;
-        if (!connected) devent("error", "The chat client is not connected."); return;
+        if (!connected) devent("error", "The chat client is not connected.");
         socket.send("/msg " + room + " " + message);
     }
 

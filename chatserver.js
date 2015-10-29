@@ -113,22 +113,23 @@ function ChatServer(port) {
         var room = cmdstr[1];
         var msg = cmdstr[2];
 
-        var dbrooms = Db.getUserRooms(username);
-
-        if (dbrooms.indexOf(room) == -1) {
-            sendCommand(client, "/err User try to send a message to an unauthorized room.", username);
-        }
-        else {
-            var msgobj = Db.addMsgRoom(username, room, msg);
-
-            if (room_sockets[room])
-            {
-                for (var i in room_sockets[room])
-                {
-                    sendCommand(room_sockets[room][i], "/msg " + room + " " + formatMsgObj(msgobj), username);
-                }
+        Db.getUserRooms(username, function(err, dbrooms) {
+    console.log(dbrooms);
+            if (dbrooms.indexOf(room) == -1) {
+                sendCommand(client, "/err User try to send a message to an unauthorized room.", username);
             }
-        }
+            else {
+                Db.addMsgRoom(username, room, msg, function(err, msgobj) {
+                    if (room_sockets[room])
+                    {
+                        for (var i in room_sockets[room])
+                        {
+                            sendCommand(room_sockets[room][i], "/msg " + room + " " + formatMsgObj(msgobj), username);
+                        }
+                    }
+                });
+            }
+        });
     }
 
     var flirtCommand = function(client, command, username) {
