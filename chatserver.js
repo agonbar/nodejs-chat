@@ -111,7 +111,7 @@ function ChatServer(port) {
     var msgCommand = function(client, command, username) {
         var cmdstr = command.split(" ");
         var room = cmdstr[1];
-        var msg = cmdstr[2];
+        var msg = cmdstr.slice(2).join(" ");
 
         Db.getUserRooms(username, function(err, dbrooms) {
             if (dbrooms.indexOf(room) == -1) {
